@@ -1,0 +1,13 @@
+c:\users\adicted\documents\visual studio 2012\Projects\autodesk_2\autodesk_2\bin\Debug\autodesk_2.exe.config
+C:\Users\adicted\Documents\Visual Studio 2012\Projects\autodesk_2\autodesk_2\obj\Debug\autodesk_2.csprojResolveAssemblyReference.cache
+C:\Users\adicted\Documents\Visual Studio 2012\Projects\autodesk_2\autodesk_2\obj\Debug\autodesk_2.csproj.GenerateResource.Cache
+C:\Users\adicted\Documents\Visual Studio 2012\Projects\autodesk_2\autodesk_2\bin\Debug\autodesk_2.exe
+C:\Users\adicted\Documents\Visual Studio 2012\Projects\autodesk_2\autodesk_2\bin\Debug\autodesk_2.pdb
+C:\Users\adicted\Documents\Visual Studio 2012\Projects\autodesk_2\autodesk_2\obj\Debug\autodesk_2.exe
+C:\Users\adicted\Documents\Visual Studio 2012\Projects\autodesk_2\autodesk_2\obj\Debug\autodesk_2.pdb
+C:\Users\adicted\documents\visual studio 2012\Projects\autodesk_2\autodesk_2\bin\Debug\autodesk_2.exe.manifest
+C:\Users\adicted\documents\visual studio 2012\Projects\autodesk_2\autodesk_2\bin\Debug\autodesk_2.application
+C:\Users\adicted\documents\visual studio 2012\Projects\autodesk_2\autodesk_2\obj\Debug\autodesk_2.exe.manifest
+C:\Users\adicted\documents\visual studio 2012\Projects\autodesk_2\autodesk_2\obj\Debug\autodesk_2.application
+C:\Users\adicted\Documents\Visual Studio 2012\Projects\autodesk_2\autodesk_2\obj\Debug\LicenceParser.Form1.resources
+C:\Users\adicted\Documents\Visual Studio 2012\Projects\autodesk_2\autodesk_2\obj\Debug\LicenceParser.Properties.Resources.resources

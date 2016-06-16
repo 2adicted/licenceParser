@@ -42,14 +42,14 @@
     </dependentAssembly>
   </dependency>
   <dependency>
-    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="autodesk_2.exe" size="32768">
+    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="autodesk_2.exe" size="36352">
       <assemblyIdentity name="autodesk_2" version="1.0.0.0" language="neutral" processorArchitecture="msil" />
       <hash>
         <dsig:Transforms>
           <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
-        <dsig:DigestValue>jLAL8wnoUfelAhBQ48lXcthBrfyzNVUe9Sgy0X4qfDM=</dsig:DigestValue>
+        <dsig:DigestValue>r+sgU7CWAD8E9wpu2JTGGsrJSqd3oBbPCLK+cFCZwro=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>

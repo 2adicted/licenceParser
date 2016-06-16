@@ -23,6 +23,7 @@ namespace LicenceParser
         
         Dictionary<string, string> flexNames = new Dictionary<string, string>()
         {
+            {"86071BDSPRM_2014_0F", "Autodesk Building Design Suite Premium 2014"},
             {"86274REVIT_2015_0F", "Autodesk Revit Architecture 2015"},
             {"86273RVT_2015_0F", "Autodesk Revit 2015"},
             {"86275RVTLT_2015_0F", "Autodesk Revit LT 2015"},
@@ -39,10 +40,14 @@ namespace LicenceParser
         List<Licence> studio_licences = new List<Licence>();        
 
         private int days;
-        private int day;
+        private DateTime day;
         private DateTime timeStart;
+        private DateTime timeEnd;
         private bool opened = false;
         private List<int> globalUsage = new List<int>();
+        private Color mainColor = Color.FromArgb(5, 0, 0, 0);
+        private Color secondaryColor = Color.FromArgb(1, 0, 0, 0);
+        private int scale = 1;
 
 
         public LicenceForm()
@@ -61,7 +66,6 @@ namespace LicenceParser
                 if (!opened)
                 {
                     opened = true;
-                    DateTime timeStamp = new DateTime();
                     OpenFileDialog theDialog = new OpenFileDialog();
                     theDialog.Title = "Open Text File";
                     theDialog.Filter = "TXT files|*.txt";
@@ -73,23 +77,36 @@ namespace LicenceParser
                         maxUsageBtn.Visible = true;
 
                         string filename = theDialog.FileName;
+                        string title = theDialog.SafeFileName;
 
                         string[] filelines = File.ReadAllLines(filename);
 
                         int num = 0;
+
+                        List<Label> licenceLabels = new List<Label>();
+
+                        licenceLabels.Add(label25);
+                        licenceLabels.Add(label26);
+                        licenceLabels.Add(label27);
+                        licenceLabels.Add(label28);
+                        licenceLabels.Add(label29);
+                        licenceLabels.Add(label30);
+                        licenceLabels.Add(label31);
+
                         Boolean time_set = false;
                         for (int i = 0; i < filelines.Length; i++)
                         {
-                            // Do something with that
-                            if (filelines[i].Contains("TIMESTAMP"))
-                            {
-                                timeStamp = Utils.stampParse(filelines[i]);
-                            }
-                            // Get all the lines containing licence entry
                             foreach (KeyValuePair<string, string> entry in flexNames)
                             {
                                 if (filelines[i].Contains(entry.Key) || filelines[i].Contains("TIMESTAMP"))
                                 {
+                                    if(!licenceLabels.Any(l => l.Text.Contains(entry.Value)))
+                                    {
+                                        if (filelines[i].Contains("TIMESTAMP")) continue;
+                                        var label = licenceLabels.First(l => l.Text.Equals("0"));
+                                        label.Text = entry.Value;
+                                        label.Visible = true;
+                                    }
                                     licenceLines.Add(filelines[i]);
                                     num++;
                                 }
@@ -100,7 +117,7 @@ namespace LicenceParser
                                 time_set = true;
                                 string[] t = filelines[i].Split(' ');
                                 timeStart = new DateTime(Convert.ToInt32(t[7]), Convert.ToInt32(Utils.timeParse[t[5]]), Convert.ToInt32(t[6]));
-                                label14.Text = "Report log date: " + timeStart.ToString("dddd") + ", " + timeStart.ToString("dd/MMM/yyyy");
+                                label14.Text = "File Name: " + title + System.Environment.NewLine + "Report log date: " + timeStart.ToString("dddd") + ", " + timeStart.ToString("dd/MMM/yyyy");
                             }
                         }
                         label6.Text = num.ToString();
@@ -124,7 +141,7 @@ namespace LicenceParser
                     label3.Text = licenceIn.Count().ToString();
                     label8.Text = licenceBounces.Count().ToString();
                     label11.Text = licenceRegections.Count().ToString();
-                    label13.Text = licenceRandom.Count().ToString();
+                    label20.Text = "Current Date: " + timeStart.ToString("dddd") + ", " + timeStart.ToString("dd/MMM/yyyy");
                 }
                 else
                 {
@@ -156,7 +173,7 @@ namespace LicenceParser
             while (lines.MoveNext())
             {
                 string l = (string)lines.Current;
-                if (l.Contains("TIMESTAMP "))
+                if (l.Contains("TIMESTAMP"))
                 {
                     timeStamp = Utils.stampParse(l);
                     if (!timeStamp.Equals(now))
@@ -167,6 +184,7 @@ namespace LicenceParser
                     if (!change)
                     {
                         now = timeStamp;
+                        timeEnd = timeStamp;
                         change = true;
                     }
                 }
@@ -214,6 +232,7 @@ namespace LicenceParser
             SplineChart();
             PieChart();
             this.progressBar1.Visible = false;
+            this.maxUsageBtn.Visible = false;
         }        
         /// <summary>
         /// retrieve concurent number of users for given date
@@ -257,37 +276,46 @@ namespace LicenceParser
             licenceIn = new List<string>();
             studio_licences = new List<Licence>();
             days = 0;
-            day = 0;
+            day = new DateTime();
             timeStart = new DateTime();
             opened = false;
             globalUsage = new List<int>();
         }
         private void label20_Click(object sender, EventArgs e)
         {
-            IncrementUp();
+            MouseEventArgs me = (MouseEventArgs)e;
+            if(me.Button == System.Windows.Forms.MouseButtons.Left)
+            {
+                IncrementUp();
+            } 
+            else if (me.Button == System.Windows.Forms.MouseButtons.Right)
+            {
+                IncrementDown();
+            }
         }
         private void IncrementUp()
         {
-            day++;
-            if (day > 6) day = 0;
-            label20.Text = Utils.weekParse[day];
+            day = day.AddDays(1);
+            if (DateTime.Compare(day, timeEnd) == 0) day = timeStart;
+            label20.Text = "Current Date: " + day.ToString("dddd") + ", " + day.ToString("dd/MMM/yyyy");
             if(licence_usage_chart.Series.Count > 0) overrideColor(day);
         }
         private void IncrementDown()
         {
-            day--;
-            if (day < 0) day = 6;
-            label20.Text = Utils.weekParse[day];
+            day = day.AddDays(-1);
+            if (DateTime.Compare(day, timeStart) < 0) day = timeEnd;
+            label20.Text = "Current Date: " + day.ToString("dddd") + ", " + day.ToString("dd/MMM/yyyy");
             if (licence_usage_chart.Series.Count > 0) overrideColor(day);
         }
-        private void overrideColor(int day)
+        private void overrideColor(DateTime day)
         {
             foreach (Series s in licence_usage_chart.Series)
             {
-                s.Color = Color.FromArgb(5, 138, 230, 72);
+                s.Color = secondaryColor;
             }
-            licence_usage_chart.Series.Where(s => s.Name.Contains(Utils.weekParse[day])).First().Color = Color.FromArgb(60, 138, 205, 230);
+            licence_usage_chart.Series.Where(s => s.Name.Contains(day.Day.ToString() + " " + day.ToString("MMM"))).First().Color = Color.FromArgb(60, 138, 205, 230);
         }
+
         #region Buttons
         /// <summary>
         /// Export chart as an image
@@ -372,21 +400,21 @@ namespace LicenceParser
             Series s = new Series();
             s.ChartType = SeriesChartType.SplineArea;
             s.BorderWidth = 1;
-            s.ShadowOffset = 1;
+            //s.ShadowOffset = 1;
             s.ShadowColor = System.Drawing.Color.FromArgb(0, 0, 0, 0);
 
             while (s_series.MoveNext())
             {
-                if (counter < 7)
+                if (counter < days)
                 {
                     s = (Series)s_series.Current;
 
                     s.IsXValueIndexed = true;
                     s.XValueType = ChartValueType.Time;
-                    s.Color = Utils.select_color(counter);
-                    day = 6;
-                    if (s.Name.Contains("Sun")) s.Color = Color.FromArgb(60, 138, 205, 230);
-                    else s.Color = s.Color = Color.FromArgb(5, 138, 230, 72);
+                    //s.Color = Utils.select_color(counter);
+                    day = timeStart;
+                    if (s.Name.Contains("Sun") || s.Name.Contains("Sat")) s.Color = Color.FromArgb(60, 138, 205, 230);
+                    else s.Color = s.Color = mainColor;
 
                     add_point_to_chart(s, current_time, counter);
                     licence_usage_chart.Series.Add(s);
@@ -402,21 +430,24 @@ namespace LicenceParser
         /// </summary>
         private void PieChart()
         {
-            //globalUsage = globalUsage.Where(i => i != 0).ToList();
             globalUsage.RemoveAll(i => i == 0);
             int max = globalUsage.Max();
+            int newMax = max;
             Dictionary<int, int> percentageUsage = new Dictionary<int, int>();
             for (int i = 1; i < max; i++)
             {
-                percentageUsage.Add(i, (int)((double)globalUsage.Where(j => j == i).ToList().Count / (double)(globalUsage.Count) * 100));
+                int percentage = (int)((double)globalUsage.Where(j => j == i).ToList().Count / (double)(globalUsage.Count) * 100);
+                if (percentage >= 1) percentageUsage.Add(i, percentage);
+                else newMax--;
             }
 
             this.licence_usage_piechart.Series.Clear();
 
             this.licence_usage_piechart.Titles.Add("Licence Distribution");
+            this.licence_usage_piechart.Titles.First().Alignment = ContentAlignment.MiddleLeft;
 
             progressBar1.Minimum = 1;
-            progressBar1.Maximum = max;
+            progressBar1.Maximum = newMax;
             progressBar1.Value = 1;
             progressBar1.Step = 1;
 
@@ -428,11 +459,16 @@ namespace LicenceParser
             series.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Pie;
             series.CustomProperties = "PieLabelStyle=Outside";
 
-            for (int i = 1; i < max; i++)
+            foreach (KeyValuePair<int, int> entry in percentageUsage)
             {
-                series.Points.AddXY(i.ToString() + ": " + percentageUsage[i].ToString() + "%", percentageUsage[i]);
+                series.Points.AddXY(entry.Key.ToString() + ": " + entry.Value.ToString() + "%", entry.Value);
                 progressBar1.PerformStep();
             }
+            //for (int i = 1; i < newMax; i++)
+            //{
+            //    series.Points.AddXY(i.ToString() + ": " + percentageUsage[i].ToString() + "%", percentageUsage[i]);
+            //    progressBar1.PerformStep();
+            //}
 
             licence_usage_piechart.Series.Add(series);
         }
@@ -452,15 +488,15 @@ namespace LicenceParser
             this.licence_usage_chart.ChartAreas[0].AxisX.IsMarginVisible = false;
 
             this.licence_usage_chart.ChartAreas[0].AxisY.Minimum = 0;
-            this.licence_usage_chart.ChartAreas[0].AxisY.Maximum = 16;
+            this.licence_usage_chart.ChartAreas[0].AxisY.Maximum = 16*scale;
             this.licence_usage_chart.ChartAreas[0].AxisY.MinorGrid.LineColor = Color.LightGray;
             this.licence_usage_chart.ChartAreas[0].AxisY.MajorGrid.LineColor = Color.LightSalmon;
-            this.licence_usage_chart.ChartAreas[0].AxisY.MinorGrid.Interval = 4;
+            this.licence_usage_chart.ChartAreas[0].AxisY.MinorGrid.Interval = 4*scale;
             this.licence_usage_chart.ChartAreas[0].AxisY.MinorGrid.Enabled = true;
             this.licence_usage_chart.ChartAreas[0].AxisY.MinorGrid.LineDashStyle = ChartDashStyle.Dot;
-            this.licence_usage_chart.ChartAreas[0].AxisY.MajorGrid.Interval = 4;
-            this.licence_usage_chart.ChartAreas[0].AxisY.MajorTickMark.Interval = 4;
-            this.licence_usage_chart.ChartAreas[0].AxisY.LabelStyle.Interval = 4;
+            this.licence_usage_chart.ChartAreas[0].AxisY.MajorGrid.Interval = 4*scale;
+            this.licence_usage_chart.ChartAreas[0].AxisY.MajorTickMark.Interval = 4*scale;
+            this.licence_usage_chart.ChartAreas[0].AxisY.LabelStyle.Interval = 4*scale;
 
             //this.licence_usage_chart.ChartAreas[0].BackColor = System.Drawing.Color.Transparent;
 
@@ -542,6 +578,5 @@ namespace LicenceParser
             }
         }
         #endregion
-
     }
 }

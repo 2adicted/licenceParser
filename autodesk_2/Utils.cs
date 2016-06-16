@@ -127,17 +127,17 @@ namespace LicenceParser
         /// </summary>
         /// <param name="p"></param>
         /// <param name="d"></param>
-        private void num_users(string p, int d, List<Licence> studio_licences, System.Windows.Forms.Label label16)
-        {
-            IEnumerator licences = studio_licences.GetEnumerator();
-            int active_licences = 0;
-            while (licences.MoveNext())
-            {
-                Licence l = (Licence)licences.Current;
-                if (l.active(p, d)) active_licences++;
-            }
-            label16.Text = active_licences.ToString();
-        }
+        //private void num_users(string p, int d, List<Licence> studio_licences, System.Windows.Forms.Label label16)
+        //{
+        //    IEnumerator licences = studio_licences.GetEnumerator();
+        //    int active_licences = 0;
+        //    while (licences.MoveNext())
+        //    {
+        //        Licence l = (Licence)licences.Current;
+        //        if (l.active(p, d)) active_licences++;
+        //    }
+        //    label16.Text = active_licences.ToString();
+        //}
         #endregion
         internal static string look_up_month(string report_month)
         {
@@ -145,5 +145,22 @@ namespace LicenceParser
             if (report_month.Contains("mar") || report_month.Contains("Mar")) return "3";
             else return "0";
         }
+        /// <summary>
+        /// parse to hours, minutes and seconds
+        /// </summary>
+        /// <param name="p"></param>
+        /// <returns></returns>
+        internal static int hours(string p)
+        {
+            return Convert.ToInt16(p.Split(':')[0]);
+        }
+        internal static int minutes(string p)
+        {
+            return Convert.ToInt16(p.Split(':')[1]);
+        }
+        internal static int seconds(string p)
+        {
+            return Convert.ToInt16(p.Split(':')[2]);
+        }    
     }
 }

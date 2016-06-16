@@ -11,15 +11,18 @@ namespace LicenceParser
         public string type, time_birth, user, time_death;
         public bool closed = false;
         public int days;
-        TimeSpan start = new TimeSpan(0,0,0,0);
-        TimeSpan end = new TimeSpan(0,0,0,0);
+        //TimeSpan start = new TimeSpan(0,0,0,0);
+        //TimeSpan end = new TimeSpan(0,0,0,0);
+        DateTime startDateTime { get; set; }
+        DateTime endDateTime { get; set; }
 
-        public Licence(string t_b, string t, string u, int d)
+        public Licence(string t_b, string t, string u, int d, DateTime s)
         {
             this.time_birth = t_b;
             this.type = t;
             this.user = u;
             this.days = d;
+            this.startDateTime = s;
         }
 
         public Licence()
@@ -27,7 +30,12 @@ namespace LicenceParser
         }
 
        
-        
+        /// <summary>
+        /// not used
+        /// </summary>
+        /// <param name="t"></param>
+        /// <param name="d"></param>
+        /// <returns></returns>
         private TimeSpan break_time(string t, int d)
         {
             TimeSpan now = new TimeSpan(0,0,0,0);
@@ -47,18 +55,21 @@ namespace LicenceParser
             return user;
         }
 
-        internal void set_time_death(string time_death)
+        internal void set_time_death(string time_death, DateTime e)
         {
             this.time_death = time_death;
+            this.endDateTime = e;
         }
 
-        internal bool active(string p, int d)
+        internal bool active(string p, int d, DateTime c)
         {
             Boolean is_active = false;
-
-            TimeSpan now = break_time(p, d);
-
-            if ((now > start) && (now < end))
+            DateTime current = c;
+            //TimeSpan now = break_time(p, d);
+            //DateTime target = new DateTime(2016, 02, 02, 09, 30, 00);
+            //bool milka = false;
+            //if(DateTime.Compare(current, target) == 0) milka = true;
+            if ((DateTime.Compare(current, startDateTime) > 0) && (DateTime.Compare(current, endDateTime) < 0))
             {
                 is_active = true;
             }
@@ -68,8 +79,8 @@ namespace LicenceParser
 
         public void form_timecode()
         {
-            start = break_time(time_birth, days);
-            end = break_time(time_death, days);          
+            //start = break_time(time_birth, days);
+            //end = break_time(time_death, days);          
         }
     }
 }

@@ -49,7 +49,6 @@ namespace LicenceParser
         {
             InitializeComponent();
         }
-
         /// <summary>
         /// load the debug file (in txt format)
         /// and do all the work in this method
@@ -58,78 +57,83 @@ namespace LicenceParser
         /// <param name="e"></param>
         private void openToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (!opened)
-            {
-                opened = true;
-                DateTime timeStamp = new DateTime();
-                OpenFileDialog theDialog = new OpenFileDialog();
-                theDialog.Title = "Open Text File";
-                theDialog.Filter = "TXT files|*.txt";
-                theDialog.InitialDirectory = @"C:\Users\adicted\Documents\Visual Studio 2012\Projects\autodesk\autodesk";
-
-                if (theDialog.ShowDialog() == DialogResult.OK)
+            Start:
+                if (!opened)
                 {
-                    // make calculation button available now
-                    maxUsageBtn.Visible = true;
+                    opened = true;
+                    DateTime timeStamp = new DateTime();
+                    OpenFileDialog theDialog = new OpenFileDialog();
+                    theDialog.Title = "Open Text File";
+                    theDialog.Filter = "TXT files|*.txt";
+                    theDialog.InitialDirectory = @"C:\Users\adicted\Documents\Visual Studio 2012\Projects\autodesk\autodesk";
 
-                    string filename = theDialog.FileName;
-
-                    string[] filelines = File.ReadAllLines(filename);
-
-                    int num = 0;
-                    Boolean time_set = false;
-                    for (int i = 0; i < filelines.Length; i++)
+                    if (theDialog.ShowDialog() == DialogResult.OK)
                     {
-                        // Do something with that
-                        if (filelines[i].Contains("TIMESTAMP"))
+                        // make calculation button available now
+                        maxUsageBtn.Visible = true;
+
+                        string filename = theDialog.FileName;
+
+                        string[] filelines = File.ReadAllLines(filename);
+
+                        int num = 0;
+                        Boolean time_set = false;
+                        for (int i = 0; i < filelines.Length; i++)
                         {
-                            timeStamp = Utils.stampParse(filelines[i]);
-                        }
-                        // Get all the lines containing licence entry
-                        foreach (KeyValuePair<string, string> entry in flexNames)
-                        {
-                            if (filelines[i].Contains(entry.Key))
+                            // Do something with that
+                            if (filelines[i].Contains("TIMESTAMP"))
                             {
-                                licenceLines.Add(filelines[i]);
-                                num++;
+                                timeStamp = Utils.stampParse(filelines[i]);
+                            }
+                            // Get all the lines containing licence entry
+                            foreach (KeyValuePair<string, string> entry in flexNames)
+                            {
+                                if (filelines[i].Contains(entry.Key) || filelines[i].Contains("TIMESTAMP"))
+                                {
+                                    licenceLines.Add(filelines[i]);
+                                    num++;
+                                }
+                            }
+                            // The starting date of the log
+                            if (!time_set && filelines[i].Contains("Start-Date:"))
+                            {
+                                time_set = true;
+                                string[] t = filelines[i].Split(' ');
+                                timeStart = new DateTime(Convert.ToInt32(t[7]), Convert.ToInt32(Utils.timeParse[t[5]]), Convert.ToInt32(t[6]));
+                                label14.Text = "Report log date: " + timeStart.ToString("dddd") + ", " + timeStart.ToString("dd/MMM/yyyy");
                             }
                         }
-                        // The starting date of the log
-                        if (!time_set && filelines[i].Contains("Start-Date:"))
-                        {
-                            time_set = true;
-                            string[] t = filelines[i].Split(' ');
-                            timeStart = new DateTime(Convert.ToInt32(t[7]), Convert.ToInt32(Utils.timeParse[t[5]]), Convert.ToInt32(t[6]));
-                            label14.Text = "Report log date: " + timeStart.ToString("dddd") + ", " + timeStart.ToString("dd/MMM/yyyy");
-                        }
+                        label6.Text = num.ToString();
                     }
-                    label6.Text = num.ToString();
+                    else
+                    {
+                        opened = false;
+                        MessageBox.Show("No file loaded. Please load a valid debug log file.");
+                    }
+                    //the main method that extracts the data
+                    dataCrunch(licenceLines);
+
+                    licenceOut = Utils.get_string("OUT:", licenceLines);
+                    licenceIn = Utils.get_string("IN:", licenceLines);
+                    List<string> licenceBounces = Utils.get_string("UNSUPPORTED:", licenceLines);
+                    List<string> licenceRegections = Utils.get_string("DENIED:", licenceLines);
+                    List<string> licenceRandom = Utils.get_string("Checkin", licenceLines);
+                    licenceRandom.AddRange(Utils.get_string("consisting of:", licenceLines));
+
+                    label2.Text = licenceOut.Count().ToString();
+                    label3.Text = licenceIn.Count().ToString();
+                    label8.Text = licenceBounces.Count().ToString();
+                    label11.Text = licenceRegections.Count().ToString();
+                    label13.Text = licenceRandom.Count().ToString();
                 }
                 else
                 {
+                    this.Controls.Clear();
+                    WipeClean();
+                    InitializeComponent();
                     opened = false;
-                    MessageBox.Show("No file loaded. Please load a valid debug log file.");
+                    goto Start;
                 }
-                //the main method that extracts the data
-                dataCrunch(licenceLines);
-
-                licenceOut = Utils.get_string("OUT:", licenceLines);
-                licenceIn = Utils.get_string("IN:", licenceLines);
-                List<string> licenceBounces = Utils.get_string("UNSUPPORTED:", licenceLines);
-                List<string> licenceRegections = Utils.get_string("DENIED:", licenceLines);
-                List<string> licenceRandom = Utils.get_string("Checkin", licenceLines);
-                licenceRandom.AddRange(Utils.get_string("consisting of:", licenceLines));
-
-                label2.Text = licenceOut.Count().ToString();
-                label3.Text = licenceIn.Count().ToString();
-                label8.Text = licenceBounces.Count().ToString();
-                label11.Text = licenceRegections.Count().ToString();
-                label13.Text = licenceRandom.Count().ToString();
-            }
-            else
-            {
-                return;
-            }
         }
         /// <summary>
         /// parse the data from the log file
@@ -145,25 +149,42 @@ namespace LicenceParser
 
             TimeSpan current = new TimeSpan();
             TimeSpan previous = new TimeSpan();
-            
+            DateTime timeStamp = new DateTime();
+            DateTime now = timeStart;
+            bool change = false;
+
             while (lines.MoveNext())
             {
                 string l = (string)lines.Current;
+                if (l.Contains("TIMESTAMP "))
+                {
+                    timeStamp = Utils.stampParse(l);
+                    if (!timeStamp.Equals(now))
+                    {
+                        days++;
+                        change = false;
+                    }
+                    if (!change)
+                    {
+                        now = timeStamp;
+                        change = true;
+                    }
+                }
                 if (l.Contains("OUT:"))
                 {
                     string[] parse_it = l.Split(' ');
 
                     if (parse_it.Length == 7)
                     {
-                        studio_licences.Add(new Licence(parse_it[0], parse_it[3], parse_it[4], this.days));
+                        studio_licences.Add(new Licence(parse_it[0], parse_it[3], parse_it[4], this.days, now + new TimeSpan(Utils.hours(parse_it[0]), Utils.minutes(parse_it[0]), Utils.seconds(parse_it[0]))));
                         current = Utils.breakTime(parse_it[0]);
                     }
                     else if (parse_it.Length == 8)
                     {
-                        studio_licences.Add(new Licence(parse_it[1], parse_it[4], parse_it[5], this.days));
+                        studio_licences.Add(new Licence(parse_it[1], parse_it[4], parse_it[5], this.days, now + new TimeSpan(Utils.hours(parse_it[1]), Utils.minutes(parse_it[1]), Utils.seconds(parse_it[1]))));
                         current = Utils.breakTime(parse_it[1]);
                     }
-                    if (current < previous) days++;
+                    //if (current < previous) days++;
                     previous = current;
                 }
                 else if (l.Contains("IN:"))
@@ -171,17 +192,17 @@ namespace LicenceParser
                     string[] parse_it = l.Split(' ');
                     if (parse_it.Length == 7)
                     {
-                        kill_licences(parse_it[0], parse_it[3], parse_it[4]);
+                        kill_licences(parse_it[0], parse_it[3], parse_it[4], now + new TimeSpan(Utils.hours(parse_it[0]), Utils.minutes(parse_it[0]), Utils.seconds(parse_it[0])));
                     }
                     else if (parse_it.Length == 8)
                     {
-                        kill_licences(parse_it[1], parse_it[4], parse_it[5]);
+                        kill_licences(parse_it[1], parse_it[4], parse_it[5], now + new TimeSpan(Utils.hours(parse_it[1]), Utils.minutes(parse_it[1]), Utils.seconds(parse_it[1])));
                     }
                 }
             }
 
             label15.Text = days.ToString();
-        }    
+        }
         /// <summary>
         /// max usage - start calculating
         /// </summary>
@@ -200,9 +221,9 @@ namespace LicenceParser
         /// <param name="p"></param>
         /// <param name="d"></param>
         /// <returns></returns>
-        private int num_users_int(string p, int d)
+        private int num_users_int(string p, int d, DateTime c)
         {
-            int licences = (studio_licences.Where(l => l.active(p, d)).Count());
+            int licences = (studio_licences.Where(l => l.active(p, d, c)).Count());
             globalUsage.Add(licences);
             return licences;
         } 
@@ -212,7 +233,7 @@ namespace LicenceParser
         /// <param name="time_death"></param>
         /// <param name="type"></param>
         /// <param name="user"></param>
-        private void kill_licences(string time_death, string type, string user)
+        private void kill_licences(string time_death, string type, string user, DateTime end)
         {
             IEnumerator licences = studio_licences.GetEnumerator();
             while (licences.MoveNext())
@@ -221,11 +242,25 @@ namespace LicenceParser
 
                 if (l.get_user().Equals(user) && !l.closed)
                 {
-                    l.set_time_death(time_death);
-                    l.form_timecode();
+                    l.set_time_death(time_death, end);
                     l.closed = true;
                 }
             }
+        }
+        /// <summary>
+        /// start clean funciton
+        /// </summary>
+        private void WipeClean()
+        {
+            licenceLines = new List<string>();
+            licenceOut = new List<string>();
+            licenceIn = new List<string>();
+            studio_licences = new List<Licence>();
+            days = 0;
+            day = 0;
+            timeStart = new DateTime();
+            opened = false;
+            globalUsage = new List<int>();
         }
         private void label20_Click(object sender, EventArgs e)
         {
@@ -355,7 +390,7 @@ namespace LicenceParser
 
                     add_point_to_chart(s, current_time, counter);
                     licence_usage_chart.Series.Add(s);
-                    current_time.AddDays(1);
+                    current_time = current_time.AddDays(1);
                 }
                 counter++;
                 progressBar1.PerformStep();
@@ -485,13 +520,13 @@ namespace LicenceParser
 
             DateTime _current = current;
             DateTime _end = _current.AddDays(1);
-
+            
             int[] noisy_data = new int[hour_range.Length * minute_range.Length];
 
             while (_current.Date != _end.Date)
             {
                 string s = Utils.makeTime(_current.Hour, _current.Minute);
-                noisy_data[counter] = num_users_int(s, d);
+                noisy_data[counter] = num_users_int(s, d, _current);
                 _current = _current.AddMinutes(1);
                 counter++;
             }
